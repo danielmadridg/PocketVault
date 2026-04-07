@@ -99,6 +99,11 @@
       <!-- Note input -->
       <div class="note-box">
         <textarea id="note-input" class="note-input" placeholder="Escribe un texto, enlace, contraseña… (Ctrl+Enter para enviar)" rows="1"></textarea>
+        <button id="note-secret-toggle" class="note-secret-toggle" title="Guardar en sección oculta">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </button>
         <button id="note-send" class="note-send" title="Enviar">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -122,6 +127,10 @@
           <button class="tab" id="tab-videos" data-tab="videos" role="tab">Vídeos <span class="badge" id="badge-videos"></span></button>
           <button class="tab" id="tab-notes" data-tab="notes" role="tab">Notas <span class="badge" id="badge-notes"></span></button>
           <button class="tab" id="tab-other" data-tab="other" role="tab">Otros <span class="badge" id="badge-other"></span></button>
+          <button class="tab" id="tab-secret" data-tab="secret" role="tab">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Oculto <span class="badge" id="badge-secret"></span>
+          </button>
         </div>
       </div>
 
@@ -136,6 +145,30 @@
       </a>
     </footer>
 
+  </div>
+
+  <!-- Secret section password modal -->
+  <div id="secret-modal" class="modal" style="display:none">
+    <div class="modal-overlay"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Sección Oculta</h2>
+        <button id="modal-close" class="btn btn-icon" title="Cerrar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">Introduce la contraseña para acceder</p>
+        <input type="password" id="secret-password" class="secret-password-input" placeholder="Contraseña" autocomplete="off">
+        <div id="secret-error" class="secret-error" style="display:none"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="secret-cancel" class="btn btn-ghost">Cancelar</button>
+        <button id="secret-submit" class="btn btn-primary">Acceder</button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast container -->

@@ -330,6 +330,24 @@ body::after {
 }
 .note-input::placeholder { color: var(--text-faint); }
 
+.note-secret-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--t), color var(--t), transform 0.1s ease;
+  border: 1px solid transparent;
+}
+.note-secret-toggle:hover { background: var(--surface-2); }
+.note-secret-toggle.active { background: rgba(232,160,32,0.15); color: var(--accent); border-color: var(--accent-border); }
+.note-secret-toggle:active { transform: scale(0.9); }
+
 .note-send {
   display: flex;
   align-items: center;
@@ -699,6 +717,108 @@ body::after {
 @keyframes toastOut {
   from { opacity: 1; transform: translateX(0); }
   to   { opacity: 0; transform: translateX(12px); }
+}
+
+/* ───── MODAL ───── */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  position: relative;
+  z-index: 1001;
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  margin: 24px;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.secret-password-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color var(--t);
+  outline: none;
+}
+.secret-password-input:focus { border-color: var(--accent-border); }
+.secret-password-input::placeholder { color: var(--text-faint); }
+
+.secret-error {
+  background: var(--danger-dim);
+  border: 1px solid rgba(204,68,68,0.22);
+  border-radius: var(--radius-sm);
+  color: #d07070;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.modal-actions .btn {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 12px;
 }
 
 /* ───── FOOTER ───── */

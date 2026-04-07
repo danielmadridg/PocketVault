@@ -23,6 +23,9 @@ let db, auth, storage, currentUser;
 let unsubscribeFiles = null;
 let activeTab = 'all';
 let allFiles  = [];
+let secretUnlocked = false;
+let noteIsSecret = false;
+const SECRET_PASSWORD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'; // sha256 de contraseña vacía (placeholder)
 
 // ─── Init ───────────────────────────────────────────────────
 (function init() {
@@ -152,16 +155,33 @@ function bindAppEvents() {
   // Tabs
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
+      const newTab = tab.dataset.tab;
+      if (newTab === 'secret' && !secretUnlocked) {
+        showSecretModal();
+        return;
+      }
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      activeTab = tab.dataset.tab;
+      activeTab = newTab;
       renderGrid(activeTab);
     });
+  });
+
+  // Secret modal
+  document.getElementById('modal-close').addEventListener('click', hideSecretModal);
+  document.getElementById('secret-cancel').addEventListener('click', hideSecretModal);
+  document.getElementById('secret-submit').addEventListener('click', verifySecret);
+  document.getElementById('secret-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifySecret();
+  });
+  document.getElementById('secret-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) hideSecretModal();
   });
 
   // Note send
   const noteInput = document.getElementById('note-input');
   const noteBtn   = document.getElementById('note-send');
+  const noteSecretToggle = document.getElementById('note-secret-toggle');
 
   const sendNote = () => {
     const text = noteInput.value.trim();
@@ -170,6 +190,12 @@ function bindAppEvents() {
     noteInput.value = '';
     noteInput.style.height = 'auto';
   };
+
+  noteSecretToggle.addEventListener('click', () => {
+    noteIsSecret = !noteIsSecret;
+    noteSecretToggle.classList.toggle('active');
+    showToast(noteIsSecret ? 'Nota guardará en sección oculta' : 'Nota guardará normalmente', 'info');
+  });
 
   noteBtn.addEventListener('click', sendNote);
   noteInput.addEventListener('keydown', e => {
@@ -225,7 +251,7 @@ async function submitNote(text) {
   const now     = firebase.firestore.Timestamp.now();
   const expiry  = new Date(now.toDate().getTime() + EXPIRY_DAYS * 86400000);
 
-  await noteRef.set({
+  const noteData = {
     name:        text.slice(0, 60) + (text.length > 60 ? '…' : ''),
     content:     text,
     size:        0,
@@ -235,10 +261,14 @@ async function submitNote(text) {
     downloadURL: null,
     thumbnail:   null,
     isFavorite:  false,
+    isSecret:    noteIsSecret,
     uploadedAt:  now,
     expiresAt:   firebase.firestore.Timestamp.fromDate(expiry),
-  });
+  };
 
+  await noteRef.set(noteData);
+  noteIsSecret = false;
+  document.getElementById('note-secret-toggle').classList.remove('active');
   showToast('Nota guardada', 'success');
 }
 
@@ -306,6 +336,7 @@ async function uploadFile(file) {
         downloadURL: downloadURL,
         thumbnail:   thumbnail,
         isFavorite:  false,
+        isSecret:    false,
         uploadedAt:  now,
         expiresAt:   firebase.firestore.Timestamp.fromDate(expiry),
       });
@@ -352,6 +383,8 @@ function subscribeToFiles(uid) {
 
       snapshot.forEach(doc => {
         const f = { id: doc.id, ...doc.data() };
+        // Ensure isSecret exists for backwards compatibility
+        if (f.isSecret === undefined) f.isSecret = false;
         if (!f.isFavorite && f.expiresAt && f.expiresAt.toMillis() < now) {
           toDelete.push(f);
         } else {
@@ -392,6 +425,7 @@ const TAB_FILTERS = {
   videos:    f   => f.category === 'video',
   notes:     f   => f.category === 'note',
   other:     f   => ['audio','archive','other'].includes(f.category),
+  secret:    f   => f.isSecret,
 };
 
 function filterByTab(files, tab) {
@@ -439,16 +473,12 @@ function fileCardHTML(f) {
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
         </button>
-        <button class="action-btn action-copy" title="Copiar enlace">
+        <button class="action-btn action-copy" title="Copiar">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
         </button>
-        <button class="action-btn action-delete delete" title="Eliminar">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-          </svg>
-        </button>
+        ${f.isFavorite ? '' : '<button class="action-btn action-delete delete" title="Eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>'}
       </div>
     </div>
   </div>`;
@@ -480,11 +510,7 @@ function noteCardHTML(f) {
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
         </button>
-        <button class="action-btn action-delete delete" title="Eliminar">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-          </svg>
-        </button>
+        ${f.isFavorite ? '' : '<button class="action-btn action-delete delete" title="Eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>'}
       </div>
     </div>
   </div>`;
@@ -513,13 +539,21 @@ function emptyStateHTML(tab) {
 }
 
 // ─── FILE ACTIONS ────────────────────────────────────────────
-function downloadFile(f) {
-  const a = document.createElement('a');
-  a.href = f.downloadURL;
-  a.download = f.name;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.click();
+async function downloadFile(f) {
+  try {
+    const response = await fetch(f.downloadURL);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = f.name;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`"${truncateName(f.name, 24)}" descargado`, 'success');
+  } catch (error) {
+    console.error('Download error:', error);
+    showToast('Error al descargar', 'error');
+  }
 }
 
 async function toggleFavorite(f) {
@@ -549,13 +583,29 @@ async function toggleFavorite(f) {
   showToast(newFav ? 'Guardado en favoritos ★' : 'Eliminado de favoritos', newFav ? 'success' : 'info');
 }
 
-function copyLink(f) {
-  const text = f.category === 'note' ? (f.content || f.name) : f.downloadURL;
-  navigator.clipboard.writeText(text).then(() => {
-    showToast(f.category === 'note' ? 'Texto copiado' : 'Enlace copiado', 'success');
-  }).catch(() => {
+async function copyLink(f) {
+  try {
+    if (f.category === 'note') {
+      // Copy text for notes
+      await navigator.clipboard.writeText(f.content || f.name);
+      showToast('Texto copiado', 'success');
+    } else if (f.category === 'image') {
+      // Copy image blob for images
+      const response = await fetch(f.downloadURL);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      showToast('Imagen copiada', 'success');
+    } else {
+      // Copy URL for other files
+      await navigator.clipboard.writeText(f.downloadURL);
+      showToast('Enlace copiado', 'success');
+    }
+  } catch (error) {
+    console.error('Copy error:', error);
     showToast('No se pudo copiar', 'error');
-  });
+  }
 }
 
 function confirmDelete(f) {
@@ -585,6 +635,7 @@ function updateTabBadges() {
     videos:    allFiles.filter(f => f.category === 'video').length,
     notes:     allFiles.filter(f => f.category === 'note').length,
     other:     allFiles.filter(f => ['audio','archive','other'].includes(f.category)).length,
+    secret:    allFiles.filter(f => f.isSecret).length,
   };
   Object.entries(counts).forEach(([tab, count]) => {
     const el = document.getElementById(`badge-${tab}`);
@@ -628,6 +679,76 @@ function renderSkeletons() {
         <div class="skeleton" style="height:30px;width:100%"></div>
       </div>
     </div>`).join('');
+}
+
+// ─── SECRET SECTION ──────────────────────────────────────────
+function showSecretModal() {
+  document.getElementById('secret-modal').style.display = 'flex';
+  document.getElementById('secret-password').value = '';
+  document.getElementById('secret-error').style.display = 'none';
+  document.getElementById('secret-password').focus();
+}
+
+function hideSecretModal() {
+  document.getElementById('secret-modal').style.display = 'none';
+  secretUnlocked = false;
+}
+
+async function verifySecret() {
+  const password = document.getElementById('secret-password').value;
+  if (!password) {
+    showSecretError('Introduce una contraseña');
+    return;
+  }
+
+  try {
+    // Simple hash using SHA-256 for client-side verification
+    const hash = await hashPassword(password);
+
+    // Store the hash in localStorage if this is the first time (setup)
+    const uid = currentUser.uid;
+    const storedHash = localStorage.getItem(`vault_secret_${uid}`);
+
+    if (!storedHash) {
+      // First time: set the password
+      localStorage.setItem(`vault_secret_${uid}`, hash);
+      secretUnlocked = true;
+      document.getElementById('secret-modal').style.display = 'none';
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-secret').classList.add('active');
+      activeTab = 'secret';
+      renderGrid(activeTab);
+      showToast('Sección protegida configurada', 'success');
+    } else if (hash === storedHash) {
+      // Correct password
+      secretUnlocked = true;
+      document.getElementById('secret-modal').style.display = 'none';
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-secret').classList.add('active');
+      activeTab = 'secret';
+      renderGrid(activeTab);
+    } else {
+      showSecretError('Contraseña incorrecta');
+    }
+  } catch (error) {
+    console.error('Secret verification error:', error);
+    showSecretError('Error de verificación');
+  }
+}
+
+function showSecretError(msg) {
+  const el = document.getElementById('secret-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
 }
 
 // ─── TOAST ───────────────────────────────────────────────────
