@@ -34,6 +34,8 @@ const SECRET_PASSWORD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca4
   db      = firebase.firestore();
   storage = firebase.storage();
 
+  initCursor();
+
   // Handle Google redirect result
   auth.getRedirectResult().catch(e => {
     if (e.code) showAuthError(friendlyAuthError(e.code));
@@ -52,6 +54,66 @@ const SECRET_PASSWORD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca4
   bindAuthEvents();
   bindAppEvents();
 })();
+
+// ─── CURSOR ──────────────────────────────────────────────────
+function initCursor() {
+  const dot  = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  if (!dot || !ring) return;
+
+  let mouseX = 0, mouseY = 0;
+  let ringX = 0, ringY = 0;
+  let rafId;
+
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.left = mouseX + 'px';
+    dot.style.top  = mouseY + 'px';
+  });
+
+  // Ring lags behind with lerp
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function animateRing() {
+    ringX = lerp(ringX, mouseX, 0.12);
+    ringY = lerp(ringY, mouseY, 0.12);
+    ring.style.left = ringX + 'px';
+    ring.style.top  = ringY + 'px';
+    rafId = requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Expand on interactive elements
+  document.addEventListener('mouseover', e => {
+    if (e.target.closest('button, a, input, textarea, [role="tab"]')) {
+      ring.classList.add('expanding');
+    }
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.closest('button, a, input, textarea, [role="tab"]')) {
+      ring.classList.remove('expanding');
+    }
+  });
+
+  // Click pulse
+  document.addEventListener('mousedown', () => {
+    ring.classList.remove('expanding');
+    ring.classList.add('clicking');
+  });
+  document.addEventListener('mouseup', () => {
+    ring.classList.remove('clicking');
+  });
+
+  // Hide when leaving window
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity = '0';
+    ring.style.opacity = '0';
+  });
+  document.addEventListener('mouseenter', () => {
+    dot.style.opacity = '1';
+    ring.style.opacity = '1';
+  });
+}
 
 // ─── AUTH ────────────────────────────────────────────────────
 function bindAuthEvents() {
@@ -397,6 +459,7 @@ function subscribeToFiles(uid) {
 
       renderGrid(activeTab);
       updateTabBadges();
+      updateStoragePill();
     }, error => {
       console.error('Firestore error:', error);
       showToast('Error de conexión', 'error');
@@ -523,13 +586,15 @@ function emptyStateHTML(tab) {
     images:    ['Sin imágenes', 'Sube fotos o capturas de pantalla'],
     documents: ['Sin documentos', 'Sube PDFs, Word, Excel…'],
     videos:    ['Sin vídeos', 'Sube tus vídeos aquí'],
+    notes:     ['Sin notas', 'Escribe algo en el campo de texto'],
     other:     ['Sin otros archivos', 'Aquí verás audios, archivos y más'],
+    secret:    ['Sección vacía', 'Guarda aquí tus datos privados'],
   };
   const [title, sub] = msgs[tab] || msgs.all;
   return `
   <div class="empty-state">
     <div class="empty-state-icon">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>
       </svg>
     </div>
@@ -760,6 +825,23 @@ function showToast(msg, type = 'success') {
   document.getElementById('toast-container').appendChild(el);
   setTimeout(() => el.classList.add('toast-exit'), 3000);
   setTimeout(() => el.remove(), 3400);
+}
+
+// ─── STORAGE PILL ─────────────────────────────────────────────
+function updateStoragePill() {
+  const pill = document.getElementById('storage-pill');
+  const fill = document.getElementById('storage-pill-fill');
+  const text = document.getElementById('storage-pill-text');
+  if (!pill || !fill || !text) return;
+
+  const quotaMB = currentUser && currentUser.email === OWNER_EMAIL ? OWNER_QUOTA_MB : GUEST_QUOTA_MB;
+  const usedBytes = allFiles.reduce((sum, f) => sum + (f.size || 0), 0);
+  const usedMB = usedBytes / (1024 * 1024);
+  const pct = Math.min((usedMB / quotaMB) * 100, 100);
+
+  pill.style.display = 'flex';
+  fill.style.width = pct + '%';
+  text.textContent = usedMB < 1 ? `${Math.round(usedMB * 1024)} KB` : `${usedMB.toFixed(1)} MB`;
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────
