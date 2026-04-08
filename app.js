@@ -65,18 +65,21 @@ let lastNotificationTime = 0;
     dismissPreloader();
   });
 
-  // Bind notification button
-  const notifBtn = document.getElementById('notification-btn');
-  if (notifBtn && 'Notification' in window) {
-    notifBtn.style.display = 'block';
-    notifBtn.addEventListener('click', handleNotificationButtonClick);
-  }
-
   // Safety fallback — never leave the preloader on screen forever
   setTimeout(dismissPreloader, 4000);
 
   bindAuthEvents();
   bindAppEvents();
+
+  // Delayed binding for notification button (after functions are defined)
+  setTimeout(() => {
+    const notifBtn = document.getElementById('notification-btn');
+    if (notifBtn && 'Notification' in window) {
+      notifBtn.style.display = 'block';
+      notifBtn.addEventListener('click', handleNotificationButtonClick);
+      updateNotificationButtonState();
+    }
+  }, 0);
 })();
 
 // ─── SCROLL-HIDE HEADER ──────────────────────────────────────
@@ -790,18 +793,11 @@ async function copyLink(f) {
       // Copy text for notes
       await navigator.clipboard.writeText(f.content || f.name);
       showToast('Texto copiado', 'success');
-    } else if (f.category === 'image') {
-      // Copy image blob for images
-      const response = await fetch(f.downloadURL);
-      const blob = await response.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ [blob.type]: blob })
-      ]);
-      showToast('Imagen copiada', 'success');
     } else {
-      // Copy URL for other files
+      // Copy URL for all file types (images, documents, etc.)
       await navigator.clipboard.writeText(f.downloadURL);
-      showToast('Enlace copiado', 'success');
+      const type = f.category === 'image' ? 'Imagen' : 'Enlace';
+      showToast(type + ' copiado', 'success');
     }
   } catch (error) {
     console.error('Copy error:', error);
