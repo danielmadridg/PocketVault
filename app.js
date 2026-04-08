@@ -26,6 +26,8 @@ let allFiles  = [];
 let secretUnlocked = false;
 let noteIsSecret = false;
 const SECRET_PASSWORD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'; // sha256 de contraseña vacía (placeholder)
+let notificationPermission = false;
+let lastNotificationTime = 0;
 
 // ─── Init ───────────────────────────────────────────────────
 (function init() {
@@ -317,6 +319,9 @@ function showApp(user) {
 
   renderSkeletons();
   subscribeToFiles(user.uid);
+
+  // Request notification permission
+  requestNotificationPermission();
 }
 
 // ─── APP EVENTS ──────────────────────────────────────────────
@@ -547,6 +552,9 @@ function generateThumbnail(file) {
 function subscribeToFiles(uid) {
   if (unsubscribeFiles) unsubscribeFiles();
 
+  // Track files we've seen to detect new uploads
+  let previousFileIds = new Set();
+
   unsubscribeFiles = db
     .collection('users').doc(uid).collection('files')
     .orderBy('uploadedAt', 'desc')
@@ -563,8 +571,17 @@ function subscribeToFiles(uid) {
           toDelete.push(f);
         } else {
           allFiles.push(f);
+
+          // Detect new uploads: file not in previous set + uploaded after lastNotificationTime
+          if (!previousFileIds.has(f.id) && f.uploadedAt.toMillis() > lastNotificationTime) {
+            showUploadNotification(f);
+          }
         }
       });
+
+      // Update tracked files
+      previousFileIds = new Set(allFiles.map(f => f.id));
+      lastNotificationTime = now;
 
       // Auto-delete expired files (fire & forget)
       toDelete.forEach(f => deleteFileRecord(f).catch(console.error));
@@ -1033,4 +1050,50 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// ─── NOTIFICATIONS ──────────────────────────────────────────
+function requestNotificationPermission() {
+  // Check if the browser supports Notification API
+  if (!('Notification' in window)) {
+    console.log('Este navegador no soporta notificaciones');
+    return;
+  }
+
+  // If permission already denied, don't ask again
+  if (Notification.permission === 'denied') {
+    notificationPermission = false;
+    return;
+  }
+
+  // If already granted, set flag
+  if (Notification.permission === 'granted') {
+    notificationPermission = true;
+    return;
+  }
+
+  // Otherwise, ask for permission
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      notificationPermission = permission === 'granted';
+    });
+  }
+}
+
+
+function showUploadNotification(file) {
+  if (!notificationPermission || Notification.permission !== 'granted') {
+    return;
+  }
+
+  const options = {
+    body: truncateName(file.name, 50),
+    tag: 'pocketvault-upload',
+  };
+
+  try {
+    new Notification('📁 Archivo subido', options);
+  } catch (e) {
+    console.error('Error mostrando notificación:', e);
+  }
 }
