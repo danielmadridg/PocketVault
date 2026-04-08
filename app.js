@@ -793,11 +793,18 @@ async function copyLink(f) {
       // Copy text for notes
       await navigator.clipboard.writeText(f.content || f.name);
       showToast('Texto copiado', 'success');
+    } else if (f.category === 'image') {
+      // Copy image blob for images (now that CORS is enabled)
+      const response = await fetch(f.downloadURL);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      showToast('Imagen copiada', 'success');
     } else {
-      // Copy URL for all file types (images, documents, etc.)
+      // Copy URL for other files (documents, videos, etc.)
       await navigator.clipboard.writeText(f.downloadURL);
-      const type = f.category === 'image' ? 'Imagen' : 'Enlace';
-      showToast(type + ' copiado', 'success');
+      showToast('Enlace copiado', 'success');
     }
   } catch (error) {
     console.error('Copy error:', error);
