@@ -14,7 +14,7 @@ const FIREBASE_CONFIG = {
 
 const EXPIRY_DAYS = 7;        // días antes de borrado automático
 const MAX_FILE_MB = 100;      // tamaño máximo por archivo
-const OWNER_EMAIL  = 'danielmadrridgarrabe@gmail.com';
+const OWNER_EMAIL  = 'owner@vault-b76d1.firebaseapp.com';
 const OWNER_QUOTA_MB = 4500;  // ~4.4 GB para el propietario
 const GUEST_QUOTA_MB = 200;   // 200 MB para el resto
 
