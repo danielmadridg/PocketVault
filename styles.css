@@ -421,6 +421,11 @@ body::after {
 }
 .btn-icon:hover { background: var(--surface-2); color: var(--text); }
 
+#notification-btn.notification-enabled {
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(196,161,101,0.4);
+}
+
 .btn-full { width: 100%; margin-top: 8px; }
 
 /* ─── Divider ────────────────────────────────── */

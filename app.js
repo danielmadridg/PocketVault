@@ -65,6 +65,13 @@ let lastNotificationTime = 0;
     dismissPreloader();
   });
 
+  // Bind notification button
+  const notifBtn = document.getElementById('notification-btn');
+  if (notifBtn && 'Notification' in window) {
+    notifBtn.style.display = 'block';
+    notifBtn.addEventListener('click', handleNotificationButtonClick);
+  }
+
   // Safety fallback — never leave the preloader on screen forever
   setTimeout(dismissPreloader, 4000);
 
@@ -1063,21 +1070,14 @@ function requestNotificationPermission() {
   // If permission already denied, don't ask again
   if (Notification.permission === 'denied') {
     notificationPermission = false;
-    return;
-  }
-
-  // If already granted, set flag
-  if (Notification.permission === 'granted') {
+  } else if (Notification.permission === 'granted') {
     notificationPermission = true;
-    return;
+  } else if (Notification.permission === 'default') {
+    // Don't auto-request anymore — let user click the button
+    notificationPermission = false;
   }
 
-  // Otherwise, ask for permission
-  if (Notification.permission === 'default') {
-    Notification.requestPermission().then(permission => {
-      notificationPermission = permission === 'granted';
-    });
-  }
+  updateNotificationButtonState();
 }
 
 
@@ -1096,4 +1096,49 @@ function showUploadNotification(file) {
   } catch (e) {
     console.error('Error mostrando notificación:', e);
   }
+}
+
+function updateNotificationButtonState() {
+  const btn = document.getElementById('notification-btn');
+  if (!btn) return;
+
+  if (Notification.permission === 'granted') {
+    btn.classList.add('notification-enabled');
+    btn.title = 'Notificaciones activadas';
+  } else if (Notification.permission === 'denied') {
+    btn.classList.remove('notification-enabled');
+    btn.title = 'Safari no soporta notificaciones (solo iOS)';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.classList.remove('notification-enabled');
+    btn.title = 'Activar notificaciones';
+  }
+}
+
+function handleNotificationButtonClick() {
+  if (!('Notification' in window)) {
+    showToast('Tu navegador no soporta notificaciones', 'info');
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    showToast('Las notificaciones ya están activadas', 'success');
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    showToast('Permitir notificaciones en configuración del navegador', 'info');
+    return;
+  }
+
+  Notification.requestPermission().then(permission => {
+    notificationPermission = permission === 'granted';
+    updateNotificationButtonState();
+    if (permission === 'granted') {
+      showToast('Notificaciones activadas ✓', 'success');
+    } else {
+      showToast('Permiso denegado', 'error');
+    }
+  });
 }
