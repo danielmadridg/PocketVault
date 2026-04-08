@@ -35,11 +35,22 @@ const SECRET_PASSWORD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca4
   storage = firebase.storage();
 
   initCursor();
+  initScrollHideHeader();
+  initMobileMenu();
+  initMagneticButtons();
 
   // Handle Google redirect result
   auth.getRedirectResult().catch(e => {
     if (e.code) showAuthError(friendlyAuthError(e.code));
   });
+
+  let preloaderDismissed = false;
+  const dismissPreloader = () => {
+    if (preloaderDismissed) return;
+    preloaderDismissed = true;
+    const pre = document.getElementById('preloader');
+    if (pre) setTimeout(() => pre.classList.add('done'), 1550);
+  };
 
   auth.onAuthStateChanged(user => {
     if (user) {
@@ -49,11 +60,97 @@ const SECRET_PASSWORD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca4
       currentUser = null;
       showAuth();
     }
+    dismissPreloader();
   });
+
+  // Safety fallback — never leave the preloader on screen forever
+  setTimeout(dismissPreloader, 4000);
 
   bindAuthEvents();
   bindAppEvents();
 })();
+
+// ─── SCROLL-HIDE HEADER ──────────────────────────────────────
+function initScrollHideHeader() {
+  const header = document.getElementById('header');
+  if (!header) {
+    // Defer: element may not exist yet on initial load (auth screen)
+    document.addEventListener('DOMContentLoaded', initScrollHideHeader, { once: true });
+  }
+  let lastY = window.scrollY;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const h = document.getElementById('header');
+      if (h) {
+        const y = window.scrollY;
+        const goingDown = y > lastY && y > 80;
+        h.classList.toggle('header-hidden', goingDown);
+        lastY = y;
+      }
+      ticking = false;
+    });
+  }, { passive: true });
+}
+
+// ─── MOBILE MENU ─────────────────────────────────────────────
+function initMobileMenu() {
+  document.addEventListener('click', e => {
+    const toggle = e.target.closest('#menu-toggle');
+    if (toggle) {
+      const menu = document.getElementById('mobile-menu');
+      const isOpen = toggle.classList.toggle('open');
+      if (menu) {
+        menu.classList.toggle('open', isOpen);
+        menu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      }
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+      return;
+    }
+    const signoutMobile = e.target.closest('#mobile-signout-btn');
+    if (signoutMobile) {
+      closeMobileMenu();
+      auth.signOut();
+    }
+    // Close when clicking the dim backdrop
+    if (e.target.id === 'mobile-menu') closeMobileMenu();
+  });
+}
+
+function closeMobileMenu() {
+  const toggle = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  if (toggle) { toggle.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
+  if (menu) { menu.classList.remove('open'); menu.setAttribute('aria-hidden', 'true'); }
+  document.body.style.overflow = '';
+}
+
+// ─── MAGNETIC BUTTONS ────────────────────────────────────────
+function initMagneticButtons() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (matchMedia('(max-width: 768px)').matches) return;
+
+  const handler = el => {
+    el.addEventListener('mousemove', e => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left - r.width / 2) * 0.25;
+      const y = (e.clientY - r.top - r.height / 2) * 0.35;
+      el.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+  };
+
+  // Bind existing + watch for new ones via delegation on mouseover
+  document.querySelectorAll('[data-magnetic]').forEach(handler);
+  const seen = new WeakSet();
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-magnetic]');
+    if (el && !seen.has(el)) { seen.add(el); handler(el); }
+  });
+}
 
 // ─── CURSOR ──────────────────────────────────────────────────
 function initCursor() {
@@ -201,6 +298,21 @@ function showApp(user) {
     placeholder.textContent = displayName[0].toUpperCase();
     placeholder.style.display = 'flex';
     avatar.style.display = 'none';
+  }
+
+  // Mirror into mobile drawer
+  const mAvatar = document.getElementById('mobile-user-avatar');
+  const mPlaceholder = document.getElementById('mobile-user-avatar-placeholder');
+  const mName = document.getElementById('mobile-user-name');
+  if (mName) mName.textContent = displayName;
+  if (user.photoURL && mAvatar && mPlaceholder) {
+    mAvatar.src = user.photoURL;
+    mAvatar.style.display = 'block';
+    mPlaceholder.style.display = 'none';
+  } else if (mPlaceholder) {
+    mPlaceholder.textContent = displayName[0].toUpperCase();
+    mPlaceholder.style.display = 'flex';
+    if (mAvatar) mAvatar.style.display = 'none';
   }
 
   renderSkeletons();
@@ -838,10 +950,21 @@ function updateStoragePill() {
   const usedBytes = allFiles.reduce((sum, f) => sum + (f.size || 0), 0);
   const usedMB = usedBytes / (1024 * 1024);
   const pct = Math.min((usedMB / quotaMB) * 100, 100);
+  const label = usedMB < 1 ? `${Math.round(usedMB * 1024)} KB` : `${usedMB.toFixed(1)} MB`;
 
   pill.style.display = 'flex';
   fill.style.width = pct + '%';
-  text.textContent = usedMB < 1 ? `${Math.round(usedMB * 1024)} KB` : `${usedMB.toFixed(1)} MB`;
+  text.textContent = label;
+
+  // Mirror into mobile drawer
+  const mWrap = document.getElementById('mobile-storage');
+  const mFill = document.getElementById('mobile-storage-fill');
+  const mText = document.getElementById('mobile-storage-text');
+  if (mWrap && mFill && mText) {
+    mWrap.style.display = 'block';
+    mFill.style.width = pct + '%';
+    mText.textContent = `${label} / ${quotaMB >= 1000 ? (quotaMB/1000).toFixed(1)+' GB' : quotaMB+' MB'}`;
+  }
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────
