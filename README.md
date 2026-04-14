@@ -26,13 +26,12 @@ Una aplicación web moderna para gestionar y compartir archivos con Firebase.
    ```
 
 2. **Configurar Firebase**
-   - Copia `app.config.example.js` a `app.js`
-   - Edita `app.js` con tus credenciales de Firebase:
+   - Copia `firebase-config.example.js` a `firebase-config.js`
+   - Edita `firebase-config.js` con tus credenciales de Firebase:
      - Ve a [Firebase Console](https://console.firebase.google.com)
      - Selecciona tu proyecto
      - Ve a **Configuración del proyecto** > **Tus apps**
      - Copia la configuración en el objeto `FIREBASE_CONFIG`
-     - También reemplaza `OWNER_EMAIL` con tu correo
 
 3. **Crear `.firebaserc`**
    ```json
@@ -59,6 +58,7 @@ En `app.js`, puedes ajustar:
 - `OWNER_EMAIL`: Email del propietario (para cuota especial)
 - `OWNER_QUOTA_MB`: Cuota del propietario en MB (default: 4500)
 - `GUEST_QUOTA_MB`: Cuota de otros usuarios en MB (default: 200)
+- `SECRET_PASSWORD_HASH`: Hash SHA256 de la contraseña para la sección oculta
 
 ## 🔒 Seguridad
 

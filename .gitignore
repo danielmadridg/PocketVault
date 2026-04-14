@@ -12,7 +12,7 @@ firebase-debug.*.log*
 
 # Firebase config - SENSITIVE DATA
 .firebaserc
-app.js
+firebase-config.js
 
 # Runtime data
 pids
