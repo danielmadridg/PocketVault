@@ -19,7 +19,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fraunces:ital,wght@0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,144,400;1,144,300;1,144,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -38,41 +40,57 @@
 
   <!-- ───── AUTH SCREEN ───── -->
   <div id="auth-screen" style="display:none">
-    <div class="auth-card">
-      <div class="auth-eyebrow">— Acceso · MMXXVI</div>
-      <div class="auth-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="7" fill="#1a1815"/>
-          <rect x="8" y="11" width="16" height="13" rx="2" stroke="#C4A165" stroke-width="1.5" fill="none"/>
-          <path d="M12 11V9a4 4 0 0 1 8 0v2" stroke="#C4A165" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="16" cy="17" r="1.5" fill="#C4A165"/>
-          <line x1="16" y1="18.5" x2="16" y2="21" stroke="#C4A165" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <h1 class="auth-wordmark">Pocket<em>Vault</em></h1>
+    <span class="auth-marginalia auth-marginalia-tl" aria-hidden="true">N°<em> 01</em> · Acceso · MMXXVI</span>
+    <span class="auth-marginalia auth-marginalia-br" aria-hidden="true">— bunker.priv.</span>
+    <div class="auth-stage">
+      <div class="auth-display" aria-hidden="true">
+        <span class="auth-display-num">01</span>
+        <span class="auth-display-line"></span>
+        <h2 class="auth-display-word">Pocket<em>Vault</em></h2>
+        <span class="auth-display-sub"><em>tu búnker</em> privado</span>
       </div>
-      <p class="auth-subtitle">Tu búnker privado, <em>en cualquier rincón del mundo.</em></p>
-      <div class="auth-tag">✦ Cifrado end-to-end</div>
+      <div class="auth-card">
+        <div class="auth-card-row">
+          <span class="auth-eyebrow">Acceso · MMXXVI</span>
+          <span class="auth-eyebrow-counter">[ 01 / 02 ]</span>
+        </div>
+        <div class="auth-logo">
+          <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="7" fill="#1a1815"/>
+            <rect x="8" y="11" width="16" height="13" rx="2" stroke="#C4A165" stroke-width="1.5" fill="none"/>
+            <path d="M12 11V9a4 4 0 0 1 8 0v2" stroke="#C4A165" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="16" cy="17" r="1.5" fill="#C4A165"/>
+            <line x1="16" y1="18.5" x2="16" y2="21" stroke="#C4A165" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <h1 class="auth-wordmark">Pocket<em>Vault</em></h1>
+        </div>
+        <p class="auth-subtitle">Tu búnker privado, <em>en cualquier rincón del mundo.</em></p>
+        <div class="auth-tag">Cifrado end-to-end</div>
 
-      <div id="auth-error" class="auth-error" style="display:none"></div>
+        <div id="auth-error" class="auth-error" style="display:none"></div>
 
-      <div class="form-group">
-        <label for="email-input">Correo electrónico</label>
-        <input type="email" id="email-input" placeholder="tu@email.com" autocomplete="email">
+        <div class="form-group">
+          <label for="email-input">Correo electrónico</label>
+          <input type="email" id="email-input" placeholder="tu@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password-input">Contraseña</label>
+          <input type="password" id="password-input" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <button id="signin-btn" class="btn btn-primary btn-full" data-magnetic>
+          <span>Iniciar sesión</span>
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </button>
+        <button id="signup-btn" class="btn btn-ghost btn-full" data-magnetic>Crear cuenta nueva</button>
+
+        <div class="divider"><span>o continúa con</span></div>
+
+        <button id="google-btn" class="btn btn-google btn-full" data-magnetic>
+          <svg width="16" height="16" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/><path d="M3.964 10.71C3.784 10.17 3.682 9.593 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+          Entrar con Google
+        </button>
       </div>
-      <div class="form-group">
-        <label for="password-input">Contraseña</label>
-        <input type="password" id="password-input" placeholder="••••••••" autocomplete="current-password">
-      </div>
-
-      <button id="signin-btn" class="btn btn-primary btn-full" data-magnetic>Iniciar sesión</button>
-      <button id="signup-btn" class="btn btn-ghost btn-full" data-magnetic>Crear cuenta nueva</button>
-
-      <div class="divider"><span>o continúa con</span></div>
-
-      <button id="google-btn" class="btn btn-google btn-full" data-magnetic>
-        <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/><path d="M3.964 10.71C3.784 10.17 3.682 9.593 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-        Entrar con Google
-      </button>
     </div>
   </div>
 
@@ -137,25 +155,49 @@
       </div>
     </div>
 
+    <!-- Hero band — gigantic wordmark with scroll-driven mask -->
+    <section class="hero-band" aria-hidden="true">
+      <div class="hero-band-meta">
+        <span class="hero-band-tag">N°<em> 0426</em></span>
+        <span class="hero-band-tag">priv · 2026</span>
+      </div>
+      <h1 class="hero-wordmark">
+        <span class="hero-wordmark-line">Pocket<span class="hero-dot">·</span></span>
+        <span class="hero-wordmark-line"><em>Vault</em></span>
+      </h1>
+      <div class="hero-band-rule"><span></span></div>
+    </section>
+
     <main class="main">
 
-      <div class="section-eyebrow">— I. Subir · Espacio activo</div>
+      <section class="section section-upload">
+        <aside class="section-margin">
+          <span class="section-numeral">I</span>
+          <span class="section-vrule"></span>
+          <span class="section-vlabel">subir · activo</span>
+        </aside>
 
-      <!-- Upload zone -->
-      <div id="drop-zone" class="drop-zone">
-        <input type="file" id="file-input" multiple style="display:none">
-        <div class="drop-zone-content">
-          <div class="drop-icon">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
+        <header class="section-head">
+          <span class="section-eyebrow">— I. Subir <em>· espacio activo</em></span>
+          <span class="section-counter">archivo / nota</span>
+        </header>
+
+        <!-- Upload zone -->
+        <div id="drop-zone" class="drop-zone">
+          <input type="file" id="file-input" multiple style="display:none">
+          <span class="drop-numeral" aria-hidden="true">I</span>
+          <div class="drop-zone-content">
+            <div class="drop-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="drop-text">Arrastra archivos aquí o <span class="drop-link">selecciona</span></p>
+            <p class="drop-hint">Imágenes, documentos, vídeos… hasta 100 MB</p>
           </div>
-          <p class="drop-text">Arrastra archivos aquí o <span class="drop-link">selecciona</span></p>
-          <p class="drop-hint">Imágenes, documentos, vídeos… hasta 100 MB</p>
         </div>
-      </div>
 
       <!-- Note input -->
       <div class="note-box">
@@ -172,10 +214,21 @@
         </button>
       </div>
 
-      <!-- Upload progress -->
-      <div id="upload-progress-container" class="upload-progress-container"></div>
+        <!-- Upload progress -->
+        <div id="upload-progress-container" class="upload-progress-container"></div>
+      </section>
 
-      <div class="section-eyebrow section-eyebrow-tabs">— II. Biblioteca · <em>mis cosas</em></div>
+      <section class="section section-library">
+        <aside class="section-margin section-margin-right">
+          <span class="section-numeral">II</span>
+          <span class="section-vrule"></span>
+          <span class="section-vlabel">biblioteca · archivo</span>
+        </aside>
+
+        <header class="section-head section-head-lib">
+          <span class="section-eyebrow section-eyebrow-tabs">— II. Biblioteca <em>· mis cosas</em></span>
+          <span class="section-counter section-counter-strong" id="lib-counter">— /—</span>
+        </header>
 
       <!-- Tabs -->
       <div class="tabs-wrapper">
@@ -199,6 +252,7 @@
 
       <!-- File grid -->
       <div id="file-grid" class="file-grid"></div>
+      </section>
 
     </main>
 
@@ -245,9 +299,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-  <!-- Firebase Config (contains sensitive credentials) -->
-  <script src="firebase-config.js"></script>
-  <!-- App -->
   <script src="app.js"></script>
 
 </body>

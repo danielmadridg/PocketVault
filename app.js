@@ -1,8 +1,16 @@
 // ============================================================
-//  FIREBASE CONFIG — Importada desde firebase-config.js
-//  (Crea firebase-config.js basado en firebase-config.example.js)
+//  FIREBASE CONFIG — Pega aquí tu configuración de Firebase
+//  (Firebase Console > Configuración del proyecto > Tus apps)
 // ============================================================
-// La configuración se importa dinámicamente en index.html
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyA9m8TDbh7RWj86BPJtGW64S117IAnkT-8",
+  authDomain:        "vault-b76d1.firebaseapp.com",
+  projectId:         "vault-b76d1",
+  storageBucket:     "vault-b76d1.firebasestorage.app",
+  messagingSenderId: "730367163719",
+  appId:             "1:730367163719:web:eccc44c5f5a401104fe062"
+};
+// ============================================================
 
 const EXPIRY_DAYS = 7;        // días antes de borrado automático
 const MAX_FILE_MB = 100;      // tamaño máximo por archivo
