@@ -542,7 +542,7 @@ function generateThumbnail(file) {
     const img  = new Image();
     const url  = URL.createObjectURL(file);
     img.onload = () => {
-      const MAX = 220;
+      const MAX = 400;
       let w = img.width, h = img.height;
       if (w > h) { if (w > MAX) { h = h * MAX / w; w = MAX; } }
       else        { if (h > MAX) { w = w * MAX / h; h = MAX; } }
