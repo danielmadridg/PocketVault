@@ -1,14 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Solo usuarios autenticados pueden acceder
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // Each user can only read/write documents under their own namespace.
+    // (Previously a `match /{document=**}` rule granted every signed-in user
+    //  read+write to EVERY document — full cross-account data breach. Removed.)
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Regla más estricta: cada usuario solo puede ver/editar sus propios documentos
-    match /users/{userId}/files/{document=**} {
-      allow read, write: if request.auth.uid == userId;
+    // Everything else is denied by default (no broad fallback rule).
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

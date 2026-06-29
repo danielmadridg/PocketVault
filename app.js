@@ -639,7 +639,7 @@ function fileCardHTML(f) {
   if (f.category === 'note') return noteCardHTML(f);
 
   const thumb = f.thumbnail
-    ? `<img src="${f.thumbnail}" alt="${escapeHTML(f.name)}" loading="lazy">`
+    ? `<img src="${escapeHTML(f.thumbnail)}" alt="${escapeHTML(f.name)}" loading="lazy">`
     : `<div class="file-type-icon ${iconClass(f.category)}">${categoryEmoji(f.category)}</div>`;
 
   const expiryBadge = f.isFavorite
