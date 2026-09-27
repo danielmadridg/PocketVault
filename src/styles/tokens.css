@@ -1,0 +1,118 @@
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/cabinet-grotesk-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Boska';
+  src: url('/fonts/boska-italic-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Lacquer: warm near-black ramp, hue 70. Steps follow the Radix model. */
+  --n-1: oklch(0.155 0.006 70);   /* app background */
+  --n-2: oklch(0.182 0.007 70);   /* raised: cards, composer */
+  --n-3: oklch(0.212 0.008 70);   /* component background */
+  --n-4: oklch(0.243 0.009 70);   /* hover */
+  --n-5: oklch(0.276 0.010 70);   /* active */
+  --n-6: oklch(0.305 0.010 70);   /* hairline */
+  --n-7: oklch(0.372 0.012 70);   /* interactive border */
+  --n-8: oklch(0.462 0.014 72);   /* strong border */
+  --n-9: oklch(0.605 0.015 74);   /* placeholder, counts: >= 4.5:1 on --n-2 */
+  --n-10: oklch(0.655 0.016 76);
+  --n-11: oklch(0.775 0.016 80);  /* secondary text */
+  --n-12: oklch(0.948 0.012 85);  /* primary text */
+
+  /* Brass: the only accent. Lighter steps lean toward yellow, not just up in L. */
+  --b-3: oklch(0.252 0.036 76);
+  --b-4: oklch(0.292 0.046 77);
+  --b-6: oklch(0.440 0.072 78);
+  --b-9: oklch(0.765 0.102 80);
+  --b-10: oklch(0.825 0.102 88);
+  --b-11: oklch(0.810 0.092 83);
+
+  /* Red is reserved for the last day of the fuse and destructive actions. */
+  --r-3: oklch(0.255 0.060 28);
+  --r-9: oklch(0.640 0.170 29);
+  --r-11: oklch(0.780 0.120 32);
+
+  --bg: var(--n-1);
+  --surface: var(--n-2);
+  --surface-2: var(--n-3);
+  --hover: var(--n-4);
+  --pressed: var(--n-5);
+  --line: var(--n-6);
+  --line-strong: var(--n-7);
+  --line-heavy: var(--n-8);
+  --text: var(--n-12);
+  --text-2: var(--n-11);
+  --text-3: var(--n-9);
+  --accent: var(--b-9);
+  --accent-hover: var(--b-10);
+  --accent-text: var(--b-11);
+  --accent-tint: var(--b-3);
+  --accent-tint-2: var(--b-4);
+  --accent-line: var(--b-6);
+  --on-accent: var(--n-1);
+  --danger: var(--r-9);
+  --danger-text: var(--r-11);
+  --danger-tint: var(--r-3);
+  --focus: var(--b-9);
+  --focus-halo: oklch(0.765 0.102 80 / 0.22);
+  --on-accent-line: oklch(0.155 0.006 70 / 0.35);
+  --scrim: oklch(0.105 0.008 70 / 0.84);
+
+  --font-ui: 'Cabinet Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mark: 'Boska', 'Iowan Old Style', Georgia, serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Major-third scale from 16, with two denser UI steps below it. */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5625rem;
+  --fs-2xl: 2.4375rem;
+  --fs-display: clamp(3rem, 6.4vw, 5.6rem);
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  /* Radius by role. Nested: inner = outer - padding. */
+  --radius-hair: 2px; /* underlines, link focus */
+  --radius-xs: 4px;   /* keys, card media (card 10 - inset 6) */
+  --radius-sm: 6px;   /* buttons, inputs */
+  --radius-md: 10px;  /* cards, menus, toasts */
+  --radius-lg: 14px;  /* composer, dialogs, panels */
+  --radius-full: 999px;
+  --card-inset: 6px;
+
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --dur-glow: 1400ms;
+  --dur-pulse: 1400ms;
+
+  --content: 1240px;
+  --gutter: clamp(16px, 3vw, 32px);
+  --topbar-h: 56px;
+  --control-h: 36px;
+  --control-h-lg: 44px;
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+}

@@ -64,3 +64,11 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Build output
+dist/
+dev-dist/
+
+# Local tooling artefacts
+.playwright-mcp/
+*-debug.log

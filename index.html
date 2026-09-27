@@ -1,305 +1,154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#080705">
-  <title>PocketVault — Tu búnker privado</title>
-  <meta name="description" content="Almacén cifrado y efímero para tus archivos, notas y secretos. Sincronizado en todos tus dispositivos.">
-
-  <!-- Open Graph -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#100e0b">
+  <title>PocketVault</title>
+  <meta name="description" content="Pega en un dispositivo, recógelo en otro. Todo se borra solo a los 7 días, salvo lo que fijes.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="PocketVault — Tu búnker privado">
-  <meta property="og:description" content="Almacén cifrado y efímero para tus archivos, notas y secretos.">
+  <meta property="og:title" content="PocketVault">
+  <meta property="og:description" content="Pega en un dispositivo, recógelo en otro. Todo se borra solo a los 7 días, salvo lo que fijes.">
   <meta property="og:url" content="https://pocketvault.space">
-  <meta property="og:site_name" content="PocketVault">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PocketVault — Tu búnker privado">
-  <meta name="twitter:description" content="Almacén cifrado y efímero para tus archivos, notas y secretos.">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://api.fontshare.com">
-  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,144,400;1,144,300;1,144,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/cabinet-grotesk-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/boska-italic-400.woff2" as="font" type="font/woff2" crossorigin>
+  <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
 
-  <!-- ───── PRELOADER ───── -->
-  <div id="preloader" class="preloader">
-    <div class="preloader-inner">
-      <div class="preloader-mark">P<span class="preloader-dot">·</span>V</div>
-      <div class="preloader-bar"><div class="preloader-bar-fill"></div></div>
+  <!-- ─── Sign in ─────────────────────────────────────────── -->
+  <div id="auth" class="auth" hidden>
+    <div class="auth-intro">
+      <p class="wordmark wordmark-xl" aria-hidden="true">Pocket<em>Vault</em></p>
+      <p class="auth-claim">Lo que guardas aquí se borra solo a los 7 días. Lo que fijas, se queda.</p>
+      <ul class="auth-facts">
+        <li><kbd class="kbd-mod">Ctrl</kbd><kbd>V</kbd> en el ordenador, abre el móvil y ya está ahí.</li>
+        <li>La sección oculta se cifra en tu dispositivo con una contraseña que no sale de él.</li>
+      </ul>
     </div>
+
+    <form id="auth-form" class="auth-card" novalidate>
+      <h1 class="auth-title" id="auth-title">Entrar</h1>
+      <button type="button" id="google-btn" class="btn btn-secondary btn-block">
+        <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.87 2.68-6.62z" fill="#4285F4"/><path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z" fill="#34A853"/><path d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z" fill="#FBBC05"/><path d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.59A8.99 8.99 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Continuar con Google
+      </button>
+      <p class="auth-or"><span>o con tu correo</span></p>
+      <label class="field">
+        <span class="field-label">Correo</span>
+        <input type="email" id="auth-email" name="email" autocomplete="email" inputmode="email" required>
+      </label>
+      <label class="field">
+        <span class="field-label">Contraseña</span>
+        <input type="password" id="auth-password" name="password" autocomplete="current-password" required minlength="6">
+      </label>
+      <p id="auth-message" class="form-message" role="alert" hidden></p>
+      <button type="submit" id="auth-submit" class="btn btn-primary btn-block">Entrar</button>
+      <div class="auth-links">
+        <button type="button" id="auth-mode" class="link">¿Primera vez? Crea una cuenta</button>
+        <button type="button" id="auth-forgot" class="link link-quiet">He olvidado la contraseña</button>
+      </div>
+    </form>
   </div>
 
-  <!-- Custom cursor -->
-  <div id="cursor-dot"></div>
-  <div id="cursor-ring"></div>
+  <!-- ─── App ─────────────────────────────────────────────── -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <a class="wordmark" href="/" aria-label="PocketVault, inicio">Pocket<em>Vault</em></a>
 
-  <!-- ───── AUTH SCREEN ───── -->
-  <div id="auth-screen" style="display:none">
-    <span class="auth-marginalia auth-marginalia-tl" aria-hidden="true">N°<em> 01</em> · Acceso · MMXXVI</span>
-    <span class="auth-marginalia auth-marginalia-br" aria-hidden="true">— bunker.priv.</span>
-    <div class="auth-stage">
-      <div class="auth-display" aria-hidden="true">
-        <span class="auth-display-num">01</span>
-        <span class="auth-display-line"></span>
-        <h2 class="auth-display-word">Pocket<em>Vault</em></h2>
-        <span class="auth-display-sub"><em>tu búnker</em> privado</span>
-      </div>
-      <div class="auth-card">
-        <div class="auth-card-row">
-          <span class="auth-eyebrow">Acceso · MMXXVI</span>
-          <span class="auth-eyebrow-counter">[ 01 / 02 ]</span>
+      <label class="search">
+        <span class="search-icon" data-icon="search"></span>
+        <input type="search" id="search" placeholder="Buscar en tu bóveda" autocomplete="off" spellcheck="false" aria-label="Buscar">
+        <kbd class="search-kbd" aria-hidden="true">/</kbd>
+      </label>
+
+      <div class="topbar-end">
+        <span id="offline" class="chip chip-warn" hidden><span data-icon="wifiOff"></span>Sin conexión</span>
+        <div id="meter" class="meter" hidden>
+          <span class="meter-track"><span class="meter-fill"></span></span>
+          <span class="meter-text"></span>
         </div>
-        <div class="auth-logo">
-          <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="7" fill="#1a1815"/>
-            <rect x="8" y="11" width="16" height="13" rx="2" stroke="#C4A165" stroke-width="1.5" fill="none"/>
-            <path d="M12 11V9a4 4 0 0 1 8 0v2" stroke="#C4A165" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="16" cy="17" r="1.5" fill="#C4A165"/>
-            <line x1="16" y1="18.5" x2="16" y2="21" stroke="#C4A165" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          <h1 class="auth-wordmark">Pocket<em>Vault</em></h1>
-        </div>
-        <p class="auth-subtitle">Tu búnker privado, <em>en cualquier rincón del mundo.</em></p>
-        <div class="auth-tag">Cifrado end-to-end</div>
-
-        <div id="auth-error" class="auth-error" style="display:none"></div>
-
-        <div class="form-group">
-          <label for="email-input">Correo electrónico</label>
-          <input type="email" id="email-input" placeholder="tu@email.com" autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="password-input">Contraseña</label>
-          <input type="password" id="password-input" placeholder="••••••••" autocomplete="current-password">
-        </div>
-
-        <button id="signin-btn" class="btn btn-primary btn-full" data-magnetic>
-          <span>Iniciar sesión</span>
-          <span class="btn-arrow" aria-hidden="true">→</span>
-        </button>
-        <button id="signup-btn" class="btn btn-ghost btn-full" data-magnetic>Crear cuenta nueva</button>
-
-        <div class="divider"><span>o continúa con</span></div>
-
-        <button id="google-btn" class="btn btn-google btn-full" data-magnetic>
-          <svg width="16" height="16" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/><path d="M3.964 10.71C3.784 10.17 3.682 9.593 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-          Entrar con Google
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ───── APP SCREEN ───── -->
-  <div id="app-screen" style="display:none">
-
-    <!-- Header -->
-    <header class="header" id="header">
-      <div class="header-logo">
-        <span class="header-initials">P<span class="header-dot">·</span>V</span>
-        <span class="header-wordmark">Pocket<strong>Vault</strong></span>
-      </div>
-      <div class="header-user">
-        <div class="storage-pill" id="storage-pill" style="display:none">
-          <div class="storage-pill-bar">
-            <div class="storage-pill-fill" id="storage-pill-fill" style="width:0%"></div>
-          </div>
-          <span id="storage-pill-text">0 MB</span>
-        </div>
-        <img id="user-avatar" class="user-avatar" src="" alt="" style="display:none">
-        <div id="user-avatar-placeholder" class="user-avatar-placeholder"></div>
-        <span id="user-name" class="user-name"></span>
-        <button id="notification-btn" class="btn btn-icon" title="Activar notificaciones" style="display:none">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </button>
-        <button id="signout-btn" class="btn btn-icon" title="Cerrar sesión">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </button>
-        <button id="menu-toggle" class="menu-toggle" aria-label="Menú" aria-expanded="false">
-          <span></span><span></span>
-        </button>
+        <button id="account-btn" class="avatar" type="button" popovertarget="account-menu" aria-label="Tu cuenta"></button>
       </div>
     </header>
 
-    <!-- Mobile drawer -->
-    <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
-      <div class="mobile-menu-inner">
-        <div class="mobile-menu-eyebrow">— Sesión · MMXXVI</div>
-        <div class="mobile-menu-user">
-          <img id="mobile-user-avatar" class="mobile-user-avatar" src="" alt="" style="display:none">
-          <div id="mobile-user-avatar-placeholder" class="mobile-user-avatar-placeholder"></div>
-          <div class="mobile-user-info">
-            <p class="mobile-user-label">Conectado como</p>
-            <p class="mobile-user-name" id="mobile-user-name"></p>
-          </div>
-        </div>
-        <div class="mobile-storage" id="mobile-storage" style="display:none">
-          <span class="mobile-storage-label">Almacenamiento</span>
-          <div class="mobile-storage-bar">
-            <div class="mobile-storage-fill" id="mobile-storage-fill" style="width:0%"></div>
-          </div>
-          <span class="mobile-storage-text" id="mobile-storage-text">0 MB</span>
-        </div>
-        <button id="mobile-signout-btn" class="btn btn-primary btn-full" data-magnetic>Cerrar sesión</button>
+    <div id="account-menu" class="menu" popover>
+      <div class="menu-user">
+        <p class="menu-name" id="menu-name"></p>
+        <p class="menu-email" id="menu-email"></p>
       </div>
+      <div class="menu-meter meter">
+        <span class="meter-track"><span class="meter-fill"></span></span>
+        <span class="meter-text"></span>
+      </div>
+      <label class="menu-item menu-switch" id="notify-row">
+        <span data-icon="bell"></span>
+        <span class="menu-item-text">Avisar de lo que llegue desde otros dispositivos</span>
+        <input type="checkbox" id="notify-toggle" class="switch">
+      </label>
+      <button type="button" class="menu-item" id="install-btn" hidden><span data-icon="install"></span><span class="menu-item-text">Instalar como aplicación</span></button>
+      <button type="button" class="menu-item" id="signout-btn"><span data-icon="logOut"></span><span class="menu-item-text">Cerrar sesión</span></button>
     </div>
 
-    <!-- Hero band — gigantic wordmark with scroll-driven mask -->
-    <section class="hero-band" aria-hidden="true">
-      <div class="hero-band-meta">
-        <span class="hero-band-tag">N°<em> 0426</em></span>
-        <span class="hero-band-tag">priv · 2026</span>
-      </div>
-      <h1 class="hero-wordmark">
-        <span class="hero-wordmark-line">Pocket<span class="hero-dot">·</span></span>
-        <span class="hero-wordmark-line"><em>Vault</em></span>
-      </h1>
-      <div class="hero-band-rule"><span></span></div>
-    </section>
-
     <main class="main">
-
-      <section class="section section-upload">
-        <aside class="section-margin">
-          <span class="section-numeral">I</span>
-          <span class="section-vrule"></span>
-          <span class="section-vlabel">subir · activo</span>
-        </aside>
-
-        <header class="section-head">
-          <span class="section-eyebrow">— I. Subir <em>· espacio activo</em></span>
-          <span class="section-counter">archivo / nota</span>
-        </header>
-
-        <!-- Upload zone -->
-        <div id="drop-zone" class="drop-zone">
-          <input type="file" id="file-input" multiple style="display:none">
-          <span class="drop-numeral" aria-hidden="true">I</span>
-          <div class="drop-zone-content">
-            <div class="drop-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-            </div>
-            <p class="drop-text">Arrastra archivos aquí o <span class="drop-link">selecciona</span></p>
-            <p class="drop-hint">Imágenes, documentos, vídeos… hasta 100 MB</p>
+      <section id="composer" class="composer" aria-label="Guardar algo nuevo">
+        <textarea id="note-input" class="composer-input" rows="1" placeholder="Escribe una nota o pega un enlace…" aria-label="Nota"></textarea>
+        <div class="composer-bar">
+          <p class="composer-hint hint-pointer"><kbd class="kbd-mod">Ctrl</kbd><kbd>V</kbd> en cualquier parte guarda lo que tengas copiado. Los archivos, suéltalos en la ventana.</p>
+          <p class="composer-hint hint-touch">Toca Pegar para guardar lo que tengas copiado.</p>
+          <div class="composer-actions">
+            <button type="button" id="paste-btn" class="btn btn-ghost hint-touch-only"><span data-icon="paste"></span>Pegar</button>
+            <button type="button" id="attach-btn" class="btn btn-ghost" title="Subir archivos"><span data-icon="paperclip"></span><span class="btn-text">Archivos</span></button>
+            <button type="button" id="secret-btn" class="btn btn-ghost btn-toggle" aria-pressed="false" title="Guardar en la sección oculta"><span data-icon="lock"></span><span class="btn-text">Oculto</span></button>
+            <button type="button" id="send-btn" class="btn btn-primary" disabled>Guardar<kbd class="kbd-on-accent kbd-send"><span class="kbd-mod">Ctrl</span>↵</kbd></button>
           </div>
         </div>
-
-      <!-- Note input -->
-      <div class="note-box">
-        <textarea id="note-input" class="note-input" placeholder="Escribe un texto, enlace, contraseña… (Ctrl+Enter para enviar)" rows="1"></textarea>
-        <button id="note-secret-toggle" class="note-secret-toggle" title="Guardar en sección oculta">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </button>
-        <button id="note-send" class="note-send" title="Enviar">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-        </button>
-      </div>
-
-        <!-- Upload progress -->
-        <div id="upload-progress-container" class="upload-progress-container"></div>
+        <input type="file" id="file-input" multiple hidden>
       </section>
 
-      <section class="section section-library">
-        <aside class="section-margin section-margin-right">
-          <span class="section-numeral">II</span>
-          <span class="section-vrule"></span>
-          <span class="section-vlabel">biblioteca · archivo</span>
-        </aside>
+      <nav class="tabs" role="tablist" aria-label="Filtrar" id="tabs">
+        <button type="button" role="tab" class="tab" data-tab="all">Todo<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="pinned">Fijados<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="images">Imágenes<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="documents">Documentos<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="videos">Vídeos<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="notes">Notas<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="other">Otros<span class="tab-count"></span></button>
+        <button type="button" role="tab" class="tab tab-secret" data-tab="secret"><span class="tab-lock" data-icon="lock"></span>Oculto<span class="tab-count"></span></button>
+      </nav>
 
-        <header class="section-head section-head-lib">
-          <span class="section-eyebrow section-eyebrow-tabs">— II. Biblioteca <em>· mis cosas</em></span>
-          <span class="section-counter section-counter-strong" id="lib-counter">— /—</span>
-        </header>
-
-      <!-- Tabs -->
-      <div class="tabs-wrapper">
-        <div class="tabs" role="tablist">
-          <button class="tab active" id="tab-all" data-tab="all" role="tab">Todos <span class="badge" id="badge-all"></span></button>
-          <button class="tab" id="tab-favorites" data-tab="favorites" role="tab">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            Favoritos <span class="badge" id="badge-favorites"></span>
-          </button>
-          <button class="tab" id="tab-images" data-tab="images" role="tab">Imágenes <span class="badge" id="badge-images"></span></button>
-          <button class="tab" id="tab-documents" data-tab="documents" role="tab">Docs <span class="badge" id="badge-documents"></span></button>
-          <button class="tab" id="tab-videos" data-tab="videos" role="tab">Vídeos <span class="badge" id="badge-videos"></span></button>
-          <button class="tab" id="tab-notes" data-tab="notes" role="tab">Notas <span class="badge" id="badge-notes"></span></button>
-          <button class="tab" id="tab-other" data-tab="other" role="tab">Otros <span class="badge" id="badge-other"></span></button>
-          <button class="tab" id="tab-secret" data-tab="secret" role="tab">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Oculto <span class="badge" id="badge-secret"></span>
-          </button>
-        </div>
-      </div>
-
-      <!-- File grid -->
-      <div id="file-grid" class="file-grid"></div>
-      </section>
-
+      <section id="library" class="library" aria-live="polite" aria-busy="true"></section>
     </main>
 
     <footer class="footer">
-      <a href="https://madriddaniel.com" target="_blank" rel="noopener noreferrer" class="footer-link">
-        hecho por <strong>Daniel Madrid</strong>
-      </a>
+      <a href="https://madriddaniel.com" target="_blank" rel="noopener">Hecho por Daniel Madrid</a>
     </footer>
-
   </div>
 
-  <!-- Secret section password modal -->
-  <div id="secret-modal" class="modal" style="display:none">
-    <div class="modal-overlay"></div>
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-header-text">
-          <span class="modal-eyebrow">— Acceso restringido</span>
-          <h2>Sección <em>Oculta</em></h2>
-        </div>
-        <button id="modal-close" class="btn btn-icon" title="Cerrar">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-text">Introduce la contraseña para acceder</p>
-        <input type="password" id="secret-password" class="secret-password-input" placeholder="Contraseña" autocomplete="off">
-        <div id="secret-error" class="secret-error" style="display:none"></div>
-      </div>
-      <div class="modal-actions">
-        <button id="secret-cancel" class="btn btn-ghost">Cancelar</button>
-        <button id="secret-submit" class="btn btn-primary">Acceder</button>
-      </div>
+  <div id="drop-overlay" class="drop-overlay" hidden>
+    <div class="drop-overlay-frame">
+      <span data-icon="download" data-size="28"></span>
+      <p id="drop-overlay-text">Suelta para guardar</p>
     </div>
   </div>
 
-  <!-- Toast container -->
-  <div id="toast-container" class="toast-container"></div>
+  <dialog id="preview" class="preview" aria-labelledby="preview-title" tabindex="-1"></dialog>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-  <script src="app.js"></script>
+  <dialog id="share-dialog" class="sheet" aria-labelledby="share-title">
+    <form method="dialog" class="sheet-body">
+      <h2 id="share-title" class="sheet-title">Guardar lo compartido</h2>
+      <p class="sheet-text">Ha llegado desde otra aplicación. Guárdalo solo si lo has compartido tú.</p>
+      <ul class="share-list" id="share-list"></ul>
+      <div class="sheet-actions">
+        <button type="submit" value="discard" class="btn btn-ghost" autofocus>Descartar</button>
+        <button type="submit" value="save" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
 
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 </body>
 </html>

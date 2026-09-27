@@ -1,0 +1,7 @@
+[
+  {
+    "origin": ["https://pocketvault.space", "http://localhost:*"],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type"]
+  }
+]
