@@ -10,15 +10,50 @@ function tabs(): HTMLButtonElement[] {
   return Array.from(document.querySelectorAll<HTMLButtonElement>('#tabs [role="tab"]'));
 }
 
-function render(state: State) {
+function indicator(): HTMLElement {
+  let el = document.querySelector<HTMLElement>('#tabs .tabs-indicator');
+  if (!el) {
+    el = document.createElement('span');
+    el.className = 'tabs-indicator';
+    el.setAttribute('aria-hidden', 'true');
+    $('#tabs').append(el);
+  }
+  return el;
+}
+
+/** Glide the brass underline under the active tab. `instant` for resize and first paint. */
+function placeIndicator(instant = false) {
+  const active = tabs().find((t) => t.getAttribute('aria-selected') === 'true');
+  const bar = indicator();
+  if (!active) return;
+  bar.classList.toggle('is-instant', instant);
+  const inset = 12;
+  bar.style.setProperty('--x', `${active.offsetLeft + inset}px`);
+  bar.style.setProperty('--w', `${Math.max(12, active.offsetWidth - inset * 2)}px`);
+  if (instant) void bar.offsetWidth;
+}
+
+/** Mark the selected tab and glide the underline to it. Called from the library render. */
+let shownTab: Tab | null = null;
+
+export function showSelectedTab(tab: Tab) {
+  if (tab === shownTab) return;
+  shownTab = tab;
+  for (const el of tabs()) {
+    const selected = el.dataset.tab === tab;
+    el.setAttribute('aria-selected', String(selected));
+    el.tabIndex = selected ? 0 : -1;
+  }
+  placeIndicator();
+}
+
+function renderCounts(state: State) {
   const counts = tabCounts(state);
   for (const tab of tabs()) {
-    const key = tab.dataset.tab as Tab;
-    const selected = key === state.tab;
-    tab.setAttribute('aria-selected', String(selected));
-    tab.tabIndex = selected ? 0 : -1;
-    const count = counts[key];
-    tab.querySelector('.tab-count')!.textContent = count ? String(count) : '';
+    const count = counts[tab.dataset.tab as Tab];
+    const label = tab.querySelector('.tab-count')!;
+    const text = count ? String(count) : '';
+    if (label.textContent !== text) label.textContent = text;
   }
   const secret = $('#tabs [data-tab="secret"]');
   const open = state.vault === 'unlocked';
@@ -26,6 +61,8 @@ function render(state: State) {
     secret.classList.toggle('is-open', open);
     secret.querySelector('.tab-lock')!.innerHTML = icon(open ? 'unlock' : 'lock', 13).value;
   }
+  // Counts change tab widths.
+  placeIndicator(true);
 }
 
 export function initTabs() {
@@ -51,10 +88,30 @@ export function initTabs() {
       } catch {
         // Storage can be unavailable; the tab just won't be remembered.
       }
-      tabs().find((t) => t.dataset.tab === state.tab)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      tabs().find((t) => t.dataset.tab === state.tab)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
     }
-    if (changed.has('tab') || changed.has('items') || changed.has('vault') || changed.has('pendingDelete')) render(state);
+    if (changed.has('items') || changed.has('vault') || changed.has('pendingDelete')) renderCounts(state);
   });
+
+  new ResizeObserver(() => placeIndicator(true)).observe(list);
+
+  // A zero-height marker right above the tabs tells when the strip is stuck under the top bar.
+  const sentinel = document.createElement('div');
+  sentinel.className = 'tabs-sentinel';
+  sentinel.setAttribute('aria-hidden', 'true');
+  $('#composer').append(sentinel);
+  const stickTop = () => Number.parseFloat(getComputedStyle(list).top) || 0;
+  let observer: IntersectionObserver | null = null;
+  const observe = () => {
+    observer?.disconnect();
+    observer = new IntersectionObserver(([entry]) => list.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < stickTop() + 1), {
+      rootMargin: `-${stickTop() + 1}px 0px 0px 0px`,
+    });
+    observer.observe(sentinel);
+  };
+  observe();
+  matchMedia('(max-width: 680px)').addEventListener('change', observe);
+  void document.fonts?.ready.then(() => placeIndicator(true));
 
   try {
     const saved = sessionStorage.getItem(TAB_KEY) as Tab | null;
@@ -62,7 +119,8 @@ export function initTabs() {
   } catch {
     // Ignore.
   }
-  render(getState());
+  showSelectedTab(getState().tab);
+  renderCounts(getState());
 }
 
 function select(tab: Tab) {

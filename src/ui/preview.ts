@@ -10,6 +10,7 @@ import { updateNote } from '../services/items';
 import { getState, subscribe } from '../store';
 import type { Item } from '../types';
 import { copy, deleteWithUndo, download, togglePin } from './actions';
+import { reducedMotion, slideIn } from './motion';
 import { visibleItems } from './selectors';
 import { toastError } from './toast';
 
@@ -183,6 +184,7 @@ function render(force = false) {
 
   renderToken++;
   releaseObjectURL();
+  el.classList.toggle('is-note', item.category === 'note');
   setHTML(
     el,
     html`<header class="preview-head">
@@ -206,10 +208,24 @@ function go(step: number) {
   const list = navList();
   const index = list.findIndex((i) => i.id === currentId);
   const next = list[index + step];
-  if (!next) return;
+  const el = dialog();
+  if (!next) {
+    if (reducedMotion()) return;
+    // At either end: a small rubber-band nudge instead of nothing.
+    el.querySelector('.preview-stage')?.animate(
+      [{ transform: 'none' }, { transform: `translateX(${-step * 14}px)` }, { transform: 'none' }],
+      { duration: 280, easing: 'ease-out' },
+    );
+    return;
+  }
   currentId = next.id;
   editing = false;
   render(true);
+  const direction = step > 0 ? 'forward' : 'back';
+  const stage = el.querySelector('.preview-stage');
+  if (stage) slideIn(stage, direction, 48);
+  const title = el.querySelector('.preview-title');
+  if (title) slideIn(title, direction, 10);
 }
 
 async function saveEdit() {
@@ -282,6 +298,21 @@ function onKeydown(event: KeyboardEvent) {
   event.preventDefault();
 }
 
+/** Make the dialog grow out of the card that opened it (transform-origin at the card's centre). */
+function aimAt(el: HTMLDialogElement, id: string) {
+  const card = document.querySelector<HTMLElement>(`#library .card[data-id="${CSS.escape(id)}"]`);
+  if (!card) {
+    el.style.removeProperty('--origin-x');
+    el.style.removeProperty('--origin-y');
+    return;
+  }
+  const r = card.getBoundingClientRect();
+  const w = Math.min(1120, innerWidth - 48);
+  const h = Math.min(760, innerHeight - 48);
+  el.style.setProperty('--origin-x', `${r.left + r.width / 2 - (innerWidth - w) / 2}px`);
+  el.style.setProperty('--origin-y', `${r.top + r.height / 2 - (innerHeight - h) / 2}px`);
+}
+
 export function openPreview(id: string) {
   const el = dialog();
   currentId = id;
@@ -290,6 +321,9 @@ export function openPreview(id: string) {
   lastSideKey = '';
   render(true);
   if (!el.open) {
+    aimAt(el, id);
+    // Deal the side panel in once: only the panel built by this opening render animates.
+    el.querySelector('.preview-side')?.classList.add('is-dealt');
     el.showModal();
     if (!pushedHistory) {
       history.pushState({ pvPreview: true }, '');
@@ -325,9 +359,14 @@ export function initPreview() {
   });
   el.addEventListener('close', () => {
     renderToken++;
-    releaseObjectURL();
     el.querySelectorAll('video, audio').forEach((m) => (m as HTMLMediaElement).pause());
-    el.replaceChildren();
+    // The exit transition still shows the content: clear it (and free the blob) afterwards.
+    const leftover = objectURL;
+    objectURL = null;
+    setTimeout(() => {
+      if (leftover) URL.revokeObjectURL(leftover);
+      if (!el.open) el.replaceChildren();
+    }, 320);
     unsubscribe?.();
     unsubscribe = null;
     const id = currentId;
@@ -339,7 +378,7 @@ export function initPreview() {
       history.back();
     }
     // Return focus to the card that opened the preview.
-    if (id) document.querySelector<HTMLElement>(`.card[data-id="${CSS.escape(id)}"]`)?.focus({ preventScroll: false });
+    if (id) document.querySelector<HTMLElement>(`#library .card[data-id="${CSS.escape(id)}"]`)?.focus({ preventScroll: false });
   });
   // Android back button / browser back closes the preview instead of leaving the app.
   window.addEventListener('popstate', () => {

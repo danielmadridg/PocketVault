@@ -7,7 +7,9 @@ import { getState, subscribe, type State, type StateKey } from '../store';
 import type { Item, Tab, Upload } from '../types';
 import { copy, deleteWithUndo, download, togglePin } from './actions';
 import { itemSignature, renderItemCard, renderUploadCard, skeletonCard, updateItemTime, updateUploadProgress, uploadSignature } from './card';
+import { flip, measure, shake, slideAway, slideIn } from './motion';
 import { openPreview } from './preview';
+import { showSelectedTab } from './tabs';
 import { visibleItems, visibleUploads } from './selectors';
 import { toast } from './toast';
 
@@ -69,8 +71,16 @@ function itemCard(item: Item, state: State): HTMLElement {
   }
   if (entry.sig !== sig) {
     const isNew = entry.el.classList.contains('is-new');
+    const wasPinned = entry.sig !== '' && entry.el.querySelector('.card-pin') !== null;
+    const hadCard = entry.sig !== '';
     renderItemCard(entry.el, item, view);
     if (isNew) entry.el.classList.add('is-new');
+    // The pin pops only at the moment it is pinned, never on a plain re-render.
+    const pin = entry.el.querySelector<HTMLElement>('.card-pin');
+    if (pin && hadCard && !wasPinned) {
+      pin.classList.add('is-popping');
+      pin.addEventListener('animationend', () => pin.classList.remove('is-popping'), { once: true });
+    }
     entry.sig = sig;
   } else {
     updateItemTime(entry.el, item);
@@ -88,6 +98,7 @@ function uploadCard(upload: Upload): HTMLElement {
   const sig = uploadSignature(upload);
   if (entry.sig !== sig) {
     renderUploadCard(entry.el, upload, entry.preview);
+    if (upload.state === 'error' && entry.sig !== '') shake(entry.el);
     entry.sig = sig;
   } else {
     updateUploadProgress(entry.el, upload);
@@ -234,6 +245,7 @@ function commit(lib: HTMLElement, out: HTMLElement[]) {
 
 function render(state: State) {
   const lib = root();
+  showSelectedTab(state.tab);
   lib.setAttribute('aria-busy', String(!state.itemsLoaded));
   prune(state);
 
@@ -298,6 +310,80 @@ function render(state: State) {
   for (const item of state.items) knownIds.add(item.id);
 }
 
+// ─── Motion ──────────────────────────────────────────────────
+
+const TAB_ORDER: Tab[] = ['all', 'pinned', 'images', 'documents', 'videos', 'notes', 'other', 'secret'];
+let lastTab: Tab | null = null;
+let lastStructure = '';
+
+/** Everything that decides WHERE things are. Content-only updates (sync, progress) leave it unchanged. */
+function structureOf(state: State): string {
+  if (!state.itemsLoaded) return 'loading';
+  if (state.tab === 'secret' && state.vault !== 'unlocked') return `vault:${state.vault}:${vaultMode}`;
+  const searching = state.query.trim() !== '';
+  const items = visibleItems(state).map((i) => (state.tab === 'all' && !searching && i.isFavorite ? `p${i.id}` : i.id));
+  return [state.tab, vaultMode, searching ? 's' : '', ...visibleUploads(state).map((u) => `u${u.id}`), ...items].join(' ');
+}
+
+/** Locking must not leave a cloned copy of a decrypted card fading on screen. */
+const hiddenWhileLocked = (el: Element) => (el as HTMLElement).dataset.secret === '1' && getState().vault !== 'unlocked';
+
+/** Layer for the ghosts of removed cards, outside #library so reconcile never touches it. */
+function ghostLayer(): HTMLElement {
+  let layer = document.querySelector<HTMLElement>('.ghosts');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.className = 'ghosts';
+    layer.setAttribute('aria-hidden', 'true');
+    layer.inert = true;
+    root().parentElement!.append(layer);
+  }
+  return layer;
+}
+
+function animatable(): Element[] {
+  return Array.from(root().querySelectorAll('.card, .group-head:not([hidden]), .empty, .vault-panel, .vault-bar'));
+}
+
+function update(state: State, changed: ReadonlySet<StateKey> = new Set()) {
+  const lib = root();
+  const structure = structureOf(state);
+  const previousTab = lastTab;
+  lastTab = state.itemsLoaded ? state.tab : null;
+
+  // Tab switch: the whole library slides the way the tabs are ordered.
+  if (previousTab && state.itemsLoaded && previousTab !== state.tab) {
+    const direction = TAB_ORDER.indexOf(state.tab) > TAB_ORDER.indexOf(previousTab) ? 'forward' : 'back';
+    lastStructure = structure;
+    // Deep in a long list, the new tab starts at its top, right under the sticky tabs.
+    const tabsBottom = document.querySelector('#tabs')!.getBoundingClientRect().bottom;
+    const scrolledPast = lib.getBoundingClientRect().top < tabsBottom - 1;
+    const before = measure(animatable());
+    render(state);
+    if (scrolledPast) window.scrollBy(0, lib.getBoundingClientRect().top - tabsBottom - 8);
+    // What was on screen leaves to one side as ghosts; the new tab slides in from the other.
+    slideAway(before, ghostLayer(), direction, hiddenWhileLocked);
+    slideIn(lib, direction);
+    return;
+  }
+
+  // Same places, new content (sync, upload progress, a card edit): no motion at all.
+  if (structure === lastStructure) {
+    render(state);
+    return;
+  }
+
+  // Something moved, arrived or left: FLIP everything to its new place.
+  const before = measure(animatable());
+  render(state);
+  lastStructure = structure;
+  flip(before, animatable(), ghostLayer(), {
+    // Typing in the search box: short and quiet.
+    quick: changed.has('query'),
+    noGhost: hiddenWhileLocked,
+  });
+}
+
 // ─── Events ──────────────────────────────────────────────────
 
 function itemById(id: string | undefined): Item | undefined {
@@ -335,11 +421,14 @@ async function onVaultSubmit(form: HTMLFormElement) {
       await changeVaultPassword(String(data.get('current') ?? ''), password);
       vaultMode = 'default';
       lastScreen = '';
-      render(getState() as State);
+      update(getState() as State);
       toast('Contraseña cambiada');
     }
   } catch (err) {
     const reason = err instanceof VaultError ? err.reason : null;
+    if (reason === 'wrong-password' || reason === 'legacy-mismatch') {
+      form.querySelectorAll('.field').forEach((field) => shake(field));
+    }
     // The panel has already switched to the unlock form, so say it where it will be seen.
     if (reason === 'exists') return void toast('Ya se había creado una contraseña desde otro dispositivo. Ábrela con esa.');
     formMessage(
@@ -368,7 +457,7 @@ function onClick(event: MouseEvent) {
     if (name === 'vault-change' || name === 'vault-cancel') {
       vaultMode = name === 'vault-change' ? 'change' : 'default';
       lastScreen = '';
-      return render(getState() as State);
+      return update(getState() as State);
     }
     if (name === 'cancel') return cancelUpload(card?.dataset.upload ?? '');
     if (name === 'retry') return retryUpload(card?.dataset.upload ?? '');
@@ -432,9 +521,9 @@ export function initLibrary() {
     void onVaultSubmit(event.target as HTMLFormElement);
   });
   subscribe((state, changed) => {
-    if (RELEVANT.some((key) => changed.has(key))) render(state);
+    if (RELEVANT.some((key) => changed.has(key))) update(state, changed);
   });
-  render(getState() as State);
+  update(getState() as State);
   setInterval(tick, 30_000);
   document.addEventListener('visibilitychange', () => !document.hidden && tick());
 }

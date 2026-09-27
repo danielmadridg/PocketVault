@@ -69,6 +69,9 @@
   --focus-halo: oklch(0.765 0.102 80 / 0.22);
   --on-accent-line: oklch(0.155 0.006 70 / 0.35);
   --scrim: oklch(0.105 0.008 70 / 0.84);
+  --glow: oklch(0.765 0.102 80 / 0.07);
+  --glow-faint: oklch(0.765 0.102 80 / 0.035);
+  --well-line: oklch(0.105 0.008 70 / 0.6);
 
   --font-ui: 'Cabinet Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-mark: 'Boska', 'Iowan Old Style', Georgia, serif;
@@ -102,12 +105,32 @@
   --radius-full: 999px;
   --card-inset: 6px;
 
+  /* Motion. Entrances decelerate, exits accelerate and are shorter; surfaces never
+     bounce (at most ~1% settle); only icon-sized things may pop. */
   --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-glide: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: linear(0, 0.016 2.3%, 0.07 5%, 0.181 8.8%, 0.53 19%, 0.679 24.3%, 0.791 29.3%, 0.876 34.5%, 0.941 40.5%, 0.985 47.8%, 1.008 57.8%, 1.005 84.8%, 1);
+  --ease-snappy: linear(0, 0.017 2%, 0.068 4.3%, 0.171 7.2%, 0.578 17%, 0.727 21.3%, 0.838 25.3%, 0.925 29.5%, 0.984 34%, 1.024 39.5%, 1.038 46.8%, 1.001 80.8%, 1);
+  --ease-pop: linear(0, 0.025 1.5%, 0.105 3.3%, 0.265 5.5%, 0.774 11.5%, 0.949 14%, 1.079 16.5%, 1.161 19%, 1.2 21.5%, 1.2 24.5%, 1.142 29%, 1.01 37%, 0.964 42.5%, 0.963 49.5%, 1.007 65.3%, 1);
   --dur-fast: 120ms;
   --dur-base: 180ms;
   --dur-slow: 280ms;
+  --dur-exit: 160ms;
+  --dur-enter: 300ms;
+  --dur-slide: 320ms;
+  --dur-move: 440ms;
+  --dur-spring: 480ms;
   --dur-glow: 1400ms;
   --dur-pulse: 1400ms;
+  --slide-distance: 40px;
+  --lift: -2px;
+
+  /* Depth: hairlines stay the base; shadows only for lifted or floating surfaces. */
+  --sheen: inset 0 1px 0 oklch(0.948 0.012 85 / 0.045);
+  --shadow-lift: 0 10px 24px -12px oklch(0.06 0.01 70 / 0.9), 0 2px 6px -2px oklch(0.06 0.01 70 / 0.6);
+  --shadow-float: 0 24px 48px -16px oklch(0.05 0.01 70 / 0.95), 0 6px 14px -6px oklch(0.05 0.01 70 / 0.7);
 
   --content: 1240px;
   --gutter: clamp(16px, 3vw, 32px);

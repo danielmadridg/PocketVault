@@ -348,10 +348,6 @@
 }
 
 /* The one orchestrated moment: a new deposit drops in and its edge glows brass. */
-.card.is-new {
-  animation: deposit var(--dur-slow) var(--ease-out) both;
-}
-
 .card.is-new::after {
   content: '';
   position: absolute;
@@ -362,12 +358,6 @@
   animation: glow-out var(--dur-glow) var(--ease-out) forwards;
 }
 
-@keyframes deposit {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.98);
-  }
-}
 
 /* ─── Skeleton ─── */
 .card.is-skeleton {

@@ -1,0 +1,628 @@
+/* ═══ Motion and depth ═══════════════════════════════════════════
+   One timing family (tokens.css). Entrances decelerate, exits accelerate
+   and are shorter. Surfaces never bounce; only icon-sized things pop.
+   Only user intent or content that really arrives animates. */
+
+/* Browsers without linear() (Safari < 17.2) get plain curves instead of springs. */
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-snappy: cubic-bezier(0.34, 1.3, 0.64, 1);
+    --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes rise-in-lg {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4) rotate(-25deg);
+  }
+}
+
+/* ─── Atmosphere: lacquer grain and one brass glow, behind everything ─── */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body::before {
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 200px 200px;
+}
+
+body::after {
+  background:
+    radial-gradient(55% 45% at 4% 108%, var(--glow), transparent 62%),
+    radial-gradient(40% 40% at 100% -8%, var(--glow-faint), transparent 60%);
+}
+
+.app,
+.auth {
+  position: relative;
+  z-index: 1;
+}
+
+/* Tab switches, card reflow and ghosts are driven from src/ui/motion.ts (Web Animations:
+   unlike View Transitions they never block clicks while they play). */
+
+/* Ghosts of removed cards leave where they were while the rest reflows. */
+.main {
+  position: relative;
+}
+
+.ghosts {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ghosts .card-actions {
+  display: none;
+}
+
+/* ─── First paint of the app: the one orchestrated entrance ─── */
+.app:not([hidden]) .composer {
+  animation: rise-in 560ms var(--ease-glide) backwards;
+}
+
+.app:not([hidden]) .tabs {
+  animation: rise-in 560ms var(--ease-glide) 60ms backwards;
+}
+
+.app:not([hidden]) .library {
+  animation: rise-in 560ms var(--ease-glide) 120ms backwards;
+}
+
+/* ─── Sign-in screen: condensed editorial entrance ─── */
+.auth:not([hidden]) .wordmark-xl {
+  animation: rise-in-lg 720ms var(--ease-emphasized) backwards;
+}
+
+.auth:not([hidden]) .wordmark-xl em {
+  display: inline-block;
+  padding-right: 0.08em;
+  animation: wipe-in 720ms var(--ease-glide) 160ms backwards;
+}
+
+.auth:not([hidden]) .auth-claim {
+  animation: rise-in 600ms var(--ease-glide) 180ms backwards;
+}
+
+.auth:not([hidden]) .auth-facts {
+  animation: rise-in 600ms var(--ease-glide) 280ms backwards;
+}
+
+.auth:not([hidden]) .auth-card {
+  animation: rise-in-lg 720ms var(--ease-emphasized) 90ms backwards;
+}
+
+@keyframes wipe-in {
+  from {
+    clip-path: inset(-20% 100% -20% 0);
+    transform: translateX(-0.12em);
+  }
+  to {
+    clip-path: inset(-20% -10% -20% 0);
+  }
+}
+
+.auth-card {
+  box-shadow: var(--sheen), var(--shadow-float);
+}
+
+/* ─── Buttons: fast press, springy release ─── */
+.btn {
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-spring) var(--ease-spring);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+  transition-timing-function: ease-out;
+}
+
+.btn-icon:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+/* A disabled primary reads "not yet", not as a muddy brown block. */
+.btn-primary:disabled {
+  opacity: 1;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+.btn:disabled kbd {
+  visibility: hidden;
+}
+
+.is-done svg {
+  animation: pop 360ms var(--ease-pop);
+}
+
+.avatar {
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-spring) var(--ease-spring);
+}
+
+.avatar:active {
+  transform: scale(0.94);
+  transition-duration: 60ms;
+}
+
+.app:has(.menu:popover-open) .avatar {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+/* ─── Account menu: unrolls from the avatar ─── */
+.menu {
+  transform-origin: top right;
+  box-shadow: var(--sheen), var(--shadow-float);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+  transition:
+    opacity var(--dur-fast) var(--ease-in),
+    transform var(--dur-fast) var(--ease-in),
+    overlay var(--dur-fast) allow-discrete,
+    display var(--dur-fast) allow-discrete;
+}
+
+.menu:popover-open {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-spring) var(--ease-spring),
+    overlay var(--dur-spring) allow-discrete,
+    display var(--dur-spring) allow-discrete;
+}
+
+@starting-style {
+  .menu:popover-open {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+
+.menu:popover-open > * {
+  animation: rise-in var(--dur-slow) var(--ease-glide) backwards;
+}
+
+.menu:popover-open > :nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.menu:popover-open > :nth-child(3) {
+  animation-delay: 55ms;
+}
+
+.menu:popover-open > :nth-child(4) {
+  animation-delay: 80ms;
+}
+
+.menu:popover-open > :nth-child(5) {
+  animation-delay: 100ms;
+}
+
+.switch::before {
+  transition: transform var(--dur-spring) var(--ease-snappy);
+}
+
+/* ─── Dialogs: grow out of what opened them, leave faster ─── */
+.preview,
+.sheet {
+  transform-origin: var(--origin-x, 50%) var(--origin-y, 50%);
+  box-shadow: var(--sheen), var(--shadow-float);
+  opacity: 0;
+  transform: translateY(12px) scale(0.94);
+  transition:
+    opacity var(--dur-exit) var(--ease-in),
+    transform var(--dur-exit) var(--ease-in),
+    overlay var(--dur-exit) allow-discrete,
+    display var(--dur-exit) allow-discrete;
+}
+
+.preview[open],
+.sheet[open] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-move) var(--ease-emphasized),
+    overlay var(--dur-move) allow-discrete,
+    display var(--dur-move) allow-discrete;
+}
+
+@starting-style {
+  .preview[open],
+  .sheet[open] {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+}
+
+.preview::backdrop,
+.sheet::backdrop {
+  background-color: var(--scrim);
+  opacity: 0;
+  transition:
+    opacity var(--dur-exit) var(--ease-in),
+    overlay var(--dur-exit) allow-discrete,
+    display var(--dur-exit) allow-discrete;
+}
+
+.preview[open]::backdrop,
+.sheet[open]::backdrop {
+  opacity: 1;
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    overlay var(--dur-slow) allow-discrete,
+    display var(--dur-slow) allow-discrete;
+}
+
+@starting-style {
+  .preview[open]::backdrop,
+  .sheet[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* The side panel is dealt in once, on open (not on every pin or navigation). */
+.preview-side.is-dealt .preview-actions > *,
+.preview-side.is-dealt .facts {
+  animation: rise-in var(--dur-slow) var(--ease-glide) 60ms backwards;
+}
+
+.preview-side.is-dealt .preview-actions > :nth-child(2) {
+  animation-delay: 85ms;
+}
+
+.preview-side.is-dealt .preview-actions > :nth-child(3) {
+  animation-delay: 110ms;
+}
+
+.preview-side.is-dealt .preview-actions > :nth-child(4) {
+  animation-delay: 130ms;
+}
+
+.preview-side.is-dealt .preview-actions > :nth-child(5) {
+  animation-delay: 150ms;
+}
+
+.preview-side.is-dealt .facts {
+  animation-delay: 170ms;
+}
+
+/* A short note no longer floats in a huge empty box. */
+.preview.is-note {
+  height: auto;
+  min-height: min(440px, calc(100dvh - 2 * var(--s-5)));
+  max-height: min(760px, calc(100dvh - 2 * var(--s-5)));
+}
+
+.preview.is-note .preview-text {
+  padding-top: var(--s-6);
+  font-size: var(--fs-md);
+}
+
+@media (max-width: 760px) {
+  .preview.is-note {
+    height: 100%;
+    max-height: none;
+  }
+}
+
+.preview-editor {
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
+.share-list li {
+  animation: rise-in var(--dur-slow) var(--ease-glide) backwards;
+}
+
+.share-list li:nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.share-list li:nth-child(3) {
+  animation-delay: 55ms;
+}
+
+.share-list li:nth-child(n + 4) {
+  animation-delay: 75ms;
+}
+
+/* Phones: the preview and the share sheet are bottom sheets. */
+@media (max-width: 760px) {
+  .preview {
+    transform: translateY(100%);
+    transition:
+      transform 220ms var(--ease-in),
+      opacity 220ms var(--ease-in),
+      overlay 220ms allow-discrete,
+      display 220ms allow-discrete;
+  }
+  .preview[open] {
+    transform: none;
+    transition:
+      transform 440ms var(--ease-emphasized),
+      opacity var(--dur-fast) var(--ease-out),
+      overlay 440ms allow-discrete,
+      display 440ms allow-discrete;
+  }
+  @starting-style {
+    .preview[open] {
+      opacity: 1;
+      transform: translateY(100%);
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    width: 100%;
+    margin: auto auto 0;
+    border-bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    opacity: 1;
+    transform: translateY(100%);
+    transition:
+      transform 220ms var(--ease-in),
+      overlay 220ms allow-discrete,
+      display 220ms allow-discrete;
+  }
+  .sheet[open] {
+    opacity: 1;
+    transform: none;
+    transition:
+      transform 440ms var(--ease-emphasized),
+      overlay 440ms allow-discrete,
+      display 440ms allow-discrete;
+  }
+  @starting-style {
+    .sheet[open] {
+      opacity: 1;
+      transform: translateY(100%);
+    }
+  }
+  .sheet-body {
+    padding-bottom: max(var(--s-6), env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── Toasts: rise from the corner; the stack reflows in toast.ts ─── */
+.toast {
+  box-shadow: var(--sheen), var(--shadow-float);
+  animation: toast-in 420ms var(--ease-snappy) backwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+/* ─── Drop overlay: the frame inhales, the arrow invites ─── */
+.drop-overlay:not([hidden]) {
+  animation: fade-in var(--dur-fast) var(--ease-out);
+}
+
+.drop-overlay:not([hidden]) .drop-overlay-frame {
+  animation: inhale var(--dur-spring) var(--ease-spring);
+}
+
+.drop-overlay:not([hidden]) .drop-overlay-frame [data-icon] {
+  animation: bob 900ms ease-in-out infinite alternate;
+}
+
+@keyframes inhale {
+  from {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes bob {
+  to {
+    transform: translateY(4px);
+  }
+}
+
+/* ─── Composer ─── */
+.composer {
+  box-shadow: var(--sheen);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.composer:focus-within {
+  box-shadow: var(--sheen), var(--shadow-lift);
+}
+
+/* Armed "Oculto": a brass seam closes along the top edge. */
+.composer::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: var(--s-4);
+  left: var(--s-4);
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-exit) var(--ease-in);
+  pointer-events: none;
+}
+
+.composer.is-secret::before {
+  transform: scaleX(1);
+  transition: transform var(--dur-slide) var(--ease-glide);
+}
+
+/* ─── Tabs ─── */
+.tab {
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-spring) var(--ease-spring);
+}
+
+.tab:active {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
+
+@media (hover: hover) {
+  .tab:not([aria-selected='true']):hover {
+    background: var(--hover);
+  }
+}
+
+.tab[aria-selected='true'] .tab-count {
+  color: var(--accent-text);
+}
+
+/* ─── Cards: lacquer sheen, recessed well, lift on hover ─── */
+.card {
+  box-shadow: var(--sheen);
+  /* Hover and press use `translate`/`scale`, which compose with the FLIP `transform`. */
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    translate var(--dur-move) var(--ease-spring),
+    scale var(--dur-spring) var(--ease-spring);
+}
+
+.card-body {
+  box-shadow: inset 0 0 0 1px var(--well-line);
+}
+
+.card-body img {
+  transition:
+    scale 420ms var(--ease-out),
+    opacity var(--dur-slow) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .card:not(.is-skeleton):not(.is-upload):hover {
+    translate: 0 var(--lift);
+    box-shadow: var(--sheen), var(--shadow-lift);
+  }
+  .card:hover .card-body img {
+    scale: 1.02;
+  }
+}
+
+.card:not(.is-upload):active:not(:has(.card-action:active)) {
+  scale: 0.985;
+  transition-duration: var(--dur-fast), var(--dur-base), var(--dur-move), 90ms;
+}
+
+.card-actions {
+  box-shadow: var(--sheen), var(--shadow-lift);
+  transform: translateY(-3px) scale(0.98);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-spring) var(--ease-spring);
+}
+
+.card-pin.is-popping {
+  display: inline-flex;
+  animation: pop var(--dur-spring) var(--ease-pop);
+}
+
+/* Upload waiting on the server: the full fuse breathes. */
+.card.is-saving .card-fuse::before {
+  animation: breathe 700ms ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+  to {
+    opacity: 0.45;
+  }
+}
+
+/* Section markers: the groups read as places cards travel to. */
+.group-head {
+  align-items: center;
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+
+.group-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  margin-left: var(--s-2);
+  background: var(--line);
+}
+
+/* ─── Vault panels ─── */
+.vault-panel {
+  box-shadow: var(--sheen);
+}
+
+
+/* ─── Warm scrollbars; focus and scrollIntoView keep clear of the sticky chrome ─── */
+html {
+  scrollbar-color: var(--n-7) var(--bg);
+  scroll-padding-top: calc(var(--topbar-h) + 48px);
+}
+
+@media (max-width: 680px) {
+  html {
+    scroll-padding-top: 56px;
+  }
+}
+
+.preview-stage,
+.preview-side,
+.share-list,
+.tabs {
+  scrollbar-width: thin;
+  scrollbar-color: var(--n-7) transparent;
+}
+
+/* ─── Reduced motion: near-instant fades, nothing travels ─── */
+@media (prefers-reduced-motion: reduce) {
+  .preview,
+  .sheet,
+  .menu {
+    transform: none !important;
+  }
+}

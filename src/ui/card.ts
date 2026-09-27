@@ -64,6 +64,8 @@ export function renderItemCard(el: HTMLElement, item: Item, view: View) {
   el.className = 'card';
   el.classList.toggle('is-sealed', view.sealed);
   el.dataset.id = item.id;
+  if (item.isSecret) el.dataset.secret = '1';
+  else delete el.dataset.secret;
   el.tabIndex = 0;
   el.setAttribute('aria-label', `${kind.label}: ${view.name}`);
 
@@ -114,9 +116,12 @@ export function uploadSignature(upload: Upload): string {
 export function renderUploadCard(el: HTMLElement, upload: Upload, previewURL: string | null) {
   const kind = kindOf(upload.category, '');
   const failed = upload.state === 'error';
-  el.className = `card is-upload${failed ? ' is-failed' : ''}`;
+  el.className = `card is-upload${failed ? ' is-failed' : ''}${upload.state === 'saving' ? ' is-saving' : ''}`;
   el.dataset.upload = upload.id;
   el.removeAttribute('tabindex');
+  // Hidden uploads must not be ghosted (cloned) after the vault locks.
+  if (upload.secret) el.dataset.secret = '1';
+  else delete el.dataset.secret;
 
   setHTML(
     el,
